@@ -4,8 +4,8 @@ require_once 'simple_html_dom.php';
 
 class Flags {
 	protected $urls = [
-		'http://src.chromium.org/viewvc/chrome/trunk/src/chrome/common/chrome_switches.cc'//,
-		//'http://src.chromium.org/viewvc/chrome/trunk/src/base/base_switches.cc'
+		'http://src.chromium.org/viewvc/chrome/trunk/src/chrome/common/chrome_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/base/base_switches.cc'
 	];
 
 	protected $publicOutput = '../flags.json';
@@ -38,19 +38,20 @@ class Flags {
 	private $preString = '';
 	private $openCondition = null;
 	private $switches = array('time' => null, 'flags' => array(), 'constants' => array());
+	private $oldFile;
 
 	public function __construct() {
-		@unlink($this->publicOutput);
-		$file = @file_get_contents($this->publicOutput);
+		//@unlink($this->publicOutput);
+		$this->oldFile = @file_get_contents($this->publicOutput);
 		$this->switches['time'] = $now = time();
-		if (!$file) {
+		if (!$this->oldFile) {
 			$this->update();
 		} else {
-			$file = json_decode($file);
-			if ($now - $file->time > 60 * 60 * 24) {
+			$this->oldFile = json_decode($this->oldFile);
+			if ($now - $this->oldFile->time > 60 * 60 * 24) {
 				$this->update();
 			} else {
-				$this->switches = $file;
+				$this->switches = $this->oldFile;
 			}
 		}
 
@@ -71,7 +72,7 @@ class Flags {
 
 	private function get($url) {
 		//file_put_contents('test.html', file_get_contents($url));
-		return file_get_html('test.html'); //file_get_html($url); //file_get_html('test.html');
+		return file_get_html($url); //file_get_html($url); //file_get_html('test.html');
 	}
 
 	private function parse($html) {
@@ -108,7 +109,7 @@ class Flags {
 		// workaround for the future
 		$content = preg_replace('/#ifdef (.+)/', '#if defined($1)', $content);
 
-		$content = str_replace('#if ', '', $content);
+		$content = str_replace('#if ', '', rtrim($content));
 		$this->openCondition = $this->parseCondition($content);
 	}
 
@@ -168,7 +169,8 @@ class Flags {
 		$this->switches['flags'][$name] = array(
 		                'original' => $matches[0],
 			'comment' => trim($this->preString),
-			'condition' => $this->openCondition
+			'condition' => $this->openCondition,
+			'new' => !isset($this->oldFile->flags->{$name})
 		);
 		$this->preString = '';
 	}
