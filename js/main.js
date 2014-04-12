@@ -54,7 +54,7 @@
 		},
 
 		textParseCondition: function(condition, constants) {
-			if (condition === null || condition === undefined) return ''
+			if (condition === null || condition === '' || condition === undefined) return ''
 			condition = $.trim(condition)
 			if ($.isNumeric(condition))
 				return constants[condition].replace('OS_', '').replace(/_/g, ' ')

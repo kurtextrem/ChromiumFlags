@@ -5,7 +5,11 @@ require_once 'simple_html_dom.php';
 class Flags {
 	protected $urls = [
 		'http://src.chromium.org/viewvc/chrome/trunk/src/chrome/common/chrome_switches.cc',
-		'http://src.chromium.org/viewvc/chrome/trunk/src/base/base_switches.cc'
+		'http://src.chromium.org/viewvc/chrome/trunk/src/base/base_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/apps/switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/ash/ash_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/ipc/ipc_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/chromeos/chromeos_switches.cc'
 	];
 
 	protected $publicOutput = '../flags.json';
@@ -23,6 +27,8 @@ class Flags {
 		'}' => 'endBracket',
 
 		'"' => 'constantName',
+
+		'b' => 'boolConst',
 
 		// 3 chars
 		'#in' => 'include',
@@ -65,6 +71,17 @@ class Flags {
 
 	private function update() {
 		foreach($this->urls as $url) {
+			$comment = $condition = '';
+			if ($url === 'http://src.chromium.org/viewvc/chrome/trunk/src/chromeos/chromeos_switches.cc') {
+				$comment = '<b>The switches below only work with Chrome OS</b>';
+				$condition = 6;
+			}
+			$this->switches['flags']['..' . substr($url, 47, -3)]  = array(
+		              		'original' => $url,
+				'comment' => $comment,
+				'condition' => $condition,
+				'new' => false
+			);
 			$this->parse($this->get($url));
 		}
 		file_put_contents($this->publicOutput, json_encode($this->switches, JSON_FORCE_OBJECT));
