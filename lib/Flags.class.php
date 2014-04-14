@@ -4,7 +4,7 @@ require_once 'simple_html_dom.php';
 
 class Flags {
 	protected $urls = [
-		'http://src.chromium.org/viewvc/chrome/trunk/src/chrome/common/chrome_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/chrome/common/chrome_switches.cc', // largest first to build the base constants
 		'http://src.chromium.org/viewvc/chrome/trunk/src/base/base_switches.cc',
 		'http://src.chromium.org/viewvc/chrome/trunk/src/apps/switches.cc',
 		'http://src.chromium.org/viewvc/chrome/trunk/src/ash/ash_switches.cc',
@@ -15,22 +15,24 @@ class Flags {
 	protected $publicOutput = '../flags.json';
 
 	protected $parseActions = array(
-	                // 1 char
-		'/' => 'comment',
+	                // class parse
+		'k' => 'determination',
 
-		'#' => 'hash',
+		'cp' => 'determination',
 
-		'n' => 'namespace',
+		's' => 'constantName',
 
-		'c' => 'constant',
+		'kt' => 'boolConst', // ash_switches
 
-		'}' => 'endBracket',
+		'p' => 'endBracket',
 
-		'"' => 'constantName',
-
-		'b' => 'boolConst',
+		'c1' => 'comment',
 
 		// 3 chars
+		'con' => 'constant',
+
+		'nam' => 'namespace',
+
 		'#in' => 'include',
 
 		'#if' => 'condition',
@@ -42,6 +44,7 @@ class Flags {
 	);
 
 	private $preString = '';
+	private $original = '';
 	private $openCondition = null;
 	private $switches = array('time' => null, 'flags' => array(), 'constants' => array());
 	private $oldFile;
@@ -65,7 +68,7 @@ class Flags {
 	}
 
 	private function output() {
-		Header('Content-Type: text/json');
+		Header('Content-Type: application/json');
 		echo json_encode($this->switches, JSON_FORCE_OBJECT);
 	}
 
@@ -94,50 +97,54 @@ class Flags {
 
 	private function parse($html) {
 		foreach ($html->find('.vc_file_line_text') as $content) {
-			$content = preg_replace('/\n/', ' ', (html_entity_decode($content->plaintext)));
-
-			if(!empty($content))
+			$content = $content->childNodes();
+			if(isset($content[0]))
 				$this->call($content);
 		}
 	}
 
-	private function call($content, $length = 1) {
-		$string = substr($content, 0, $length);
+	private function call($spans, $step2 = false, $length = 3) {
+		if (!$step2)
+			$string = str_replace('pygments-', '', $spans[0]->class);
+		else
+			$string = substr($step2, 0, $length);
 		if (isset($this->parseActions[$string])) {
 			$name = 'handle'  . ucfirst($this->parseActions[$string]);
 			if (method_exists($this, $name)) {
-				$this->{$name}($content);
+				$this->{$name}($spans);
 			}
 		}
 	}
 
-	protected function handleComment($content) {
+	private function handleDetermination($spans) {
+		$this->call($spans, html_entity_decode($spans[0]->innertext));
+	}
+
+	protected function handleComment($spans) {
+		$content = html_entity_decode($spans[0]->innertext);
 		if (strpos($content, '------')) return $this->preString = ''; // workaround for the first lines in chrome_switches
-		$this->preString .= ltrim(str_replace('//', '', $content));
+		$this->preString .= preg_replace('~^// ~', '', $content) . ' ';
 	}
 
-	protected function handleHash($content) {
-		$this->call($content, 3);
-	}
-
-	protected function handleCondition($content) {
+	protected function handleCondition($spans) {
+		$content = html_entity_decode($spans[0]->innertext);
 		// workaround for #ifndef NDEBUG
 		$content = preg_replace('/#ifndef (.+)/', '#if !defined($1)', $content);
 		// workaround for the future
 		$content = preg_replace('/#ifdef (.+)/', '#if defined($1)', $content);
 
-		$content = str_replace('#if ', '', rtrim($content));
+		$content = str_replace('#if ', '', $content);
 		$this->openCondition = $this->parseCondition($content);
 	}
 
-	protected function handleElseCondition($content) {
+	protected function handleElseCondition($spans) {
 		$this->openCondition = preg_replace('/([ ]?)(\d+)/', '$1!$2', $this->openCondition);
 		$this->openCondition = str_replace('!', '', $this->openCondition);
 	}
 
 	protected function parseCondition($condition) {
 		if (strpos ($condition, '||') !== false || strpos ($condition, '&&') !== false) { // "real" condition
-			preg_match_all('/(&&|\|\|)?[ ]?(!?defined\([^\)]+\))/', $condition, $matches);
+			preg_match_all('/(&&|\|\|)?[ ]?(!?defined\([^)]+\))/', $condition, $matches);
 			$string = '';
 			foreach($matches[2] as $pos => $match) {
 				$string .= $matches[1][$pos] . ' ' . $this->parseCondition($match) . ' ';
@@ -171,36 +178,37 @@ class Flags {
 		return $search;
 	}
 
-	protected function handleEndCondition($condition) {
+	protected function handleEndCondition($spans) {
 		$this->openCondition = null;
 	}
 
-	protected function handleConstant($content) {
-		$name = trim(strstr($content, '"'));
-		if (!$name) return;
-		$name = preg_replace('/"(.*)" ;/', '$1', $name);
-		preg_match('/k([^ ]+)/', $content, $matches);
+	protected function handleConstant($spans) {
+		if (!isset($spans[5]->innertext)) return $this->original = $spans[2];
+		$name = str_replace('"', '', html_entity_decode($spans[5]->innertext));
 		if (strlen($name) < 3) { // for values like ProfilerTimingDisabledValue from base_switches
-			$name = $matches[1] . ': "' . $name . '"';
+			$name = $spans[2] . ': "' . $name . '"';
 		}
 		$this->switches['flags'][$name] = array(
-		                'original' => $matches[0],
-			'comment' => trim($this->preString),
+		                'original' => html_entity_decode($spans[2]->innertext),
+			'comment' => $this->preString,
 			'condition' => $this->openCondition,
 			'new' => !isset($this->oldFile->flags->{$name})
 		);
 		$this->preString = '';
 	}
 
-	protected function handleConstantName($content) {
-		$this->handleConstant($content);
+	protected function handleConstantName($spans) {
+		$spans[2] = $this->original;
+		$spans[5] = $spans[0];
+		$this->handleConstant($spans);
+		$this->original = '';
 	}
 
-	protected function handleNamespace ($content) {
+	protected function handleNamespace ($spans) {
 		$this->preString = '';
 	}
 
-	protected function handleInclude ($content) {
+	protected function handleInclude ($spans) {
 		$this->preString = '';
 	}
 }

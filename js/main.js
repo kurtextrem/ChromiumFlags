@@ -32,8 +32,8 @@
 					html += '<tr class="switch' + this.parseCondition(v.condition) + '"' + title + '>'
 					if (v.new)
 						add = ' <span class="label label-primary">new</span>'
-					html += '<td class="switch" id="' + i + '">' + i + add + ' <a href="#' + i + '" class="anchor">#</a></td>'
-					html += '<td>' + v.comment + '</td>'
+					html += '<td class="switch" id="' + encodeURIComponent(i) + '">' + i + add + ' <a href="#' + encodeURIComponent(i) + '" class="anchor">#</a></td>'
+					html += '<td>' + v.comment.replace(/[^:](\/\/.+)/g, '<br><span class="text-muted">$1</span>').replace(/(\. |:(?!\/| |[A-Z0-9:]))/g, '$1<br>').replace(/  /g, '<br>&nbsp;&nbsp;').replace(/(<br>&nbsp;&nbsp;){3}/g, '').replace(/--((\w|-)+)/g, '<a href="#$1">--$1</a>') + '</td>' // only break after ":char", as ": " probably tells there is something in the same line after it
 					html += '</tr>'
 				}.bind(this))
 				$('tbody').append(html)
@@ -77,11 +77,13 @@
 			window.setTimeout(function() {
 				$('[data-toggle="tooltip"]').tooltip()
 				$('[data-show="true"]').tooltip('show')
-			}, 800) // hurts performance so much
+			}, 2000) // hurts performance so much
 			if (location.hash !== '') {
+				var elem = $(location.hash)
 				$('html').animate({
-				        scrollTop: $(location.hash).offset().top
+				        scrollTop: elem.offset().top
 				}, 0) // workaround for hash not working
+				//elem.parent().addClass('target')
 			}
 			// http://www.jitbit.com/alexblog/230-javascript-injecting-extra-info-to-copypasted-text/
 			$('body').on('copy', function (e) {
