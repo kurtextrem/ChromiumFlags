@@ -5,11 +5,19 @@ require_once 'simple_html_dom.php';
 class Flags {
 	protected $urls = [
 		'http://src.chromium.org/viewvc/chrome/trunk/src/chrome/common/chrome_switches.cc', // largest first to build the base constants
+		'http://src.chromium.org/viewvc/chrome/trunk/src/content/public/common/content_switches.cc',
 		'http://src.chromium.org/viewvc/chrome/trunk/src/base/base_switches.cc',
 		'http://src.chromium.org/viewvc/chrome/trunk/src/apps/switches.cc',
 		'http://src.chromium.org/viewvc/chrome/trunk/src/ash/ash_switches.cc',
 		'http://src.chromium.org/viewvc/chrome/trunk/src/ipc/ipc_switches.cc',
-		'http://src.chromium.org/viewvc/chrome/trunk/src/chromeos/chromeos_switches.cc'
+		'http://src.chromium.org/viewvc/chrome/trunk/src/chromeos/chromeos_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/components/data_reduction_proxy/common/data_reduction_proxy_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/components/autofill/core/common/autofill_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/components/translate/core/common/translate_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/components/password_manager/core/common/password_manager_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/components/policy/core/common/policy_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/components/precache/core/precache_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/components/signin/core/common/signin_switches.cc'
 	];
 
 	protected $publicOutput = '../flags.json';
