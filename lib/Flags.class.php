@@ -87,15 +87,20 @@ class Flags {
 				$comment = '<b>The switches below only work with Chrome OS</b>';
 				$condition = 6;
 			}
-			$this->switches['flags']['..' . substr($url, 47, -3)]  = array(
-		              		'original' => $url,
-				'comment' => $comment,
-				'condition' => $condition,
-				'new' => false
-			);
+			$this->addSwitch('..' . substr($url, 47, -3), $url, $comment, $condition, false, false);
 			$this->parse($this->get($url));
 		}
 		file_put_contents($this->publicOutput, json_encode($this->switches, JSON_FORCE_OBJECT));
+	}
+
+	private function addSwitch($name, $orginal, $comment, $condition, $new, $deleted) {
+		$this->switches['flags'][$name]  = array(
+		 	'original' => $url,
+			'comment' => $comment,
+			'condition' => $condition,
+			'new' => $new,
+			'deleted' => $deleted
+		);
 	}
 
 	private function get($url) {
@@ -196,12 +201,8 @@ class Flags {
 		if (strlen($name) < 3) { // for values like ProfilerTimingDisabledValue from base_switches
 			$name = $spans[2] . ': "' . $name . '"';
 		}
-		$this->switches['flags'][$name] = array(
-		                'original' => html_entity_decode($spans[2]->innertext),
-			'comment' => $this->preString,
-			'condition' => $this->openCondition,
-			'new' => !isset($this->oldFile->flags->{$name})
-		);
+
+		$this->addSwitch($name, html_entity_decode($spans[2]->innertext), $this->preString, $this->openCondition, !isset($this->oldFile->flags->{$name}), $deleted);
 		$this->preString = '';
 	}
 
