@@ -2,7 +2,7 @@
 error_reporting(E_ALL);
 require_once 'simple_html_dom.php';
 
-class Flags {
+class SwitchesParser {
 	protected $urls = [
 		'http://src.chromium.org/viewvc/chrome/trunk/src/chrome/common/chrome_switches.cc', // largest first to build the base constants
 		'http://src.chromium.org/viewvc/chrome/trunk/src/content/public/common/content_switches.cc',
@@ -54,13 +54,13 @@ class Flags {
 	private $preString = '';
 	private $original = '';
 	private $openCondition = null;
-	private $switches = array('time' => null, 'flags' => array(), 'constants' => array());
+	private $output = array('time' => null, 'switches' => array(), 'constants' => array());
 	private $oldFile;
 
 	public function __construct() {
 		//@unlink($this->publicOutput);
 		$this->oldFile = @file_get_contents($this->publicOutput);
-		$this->switches['time'] = $now = time();
+		$this->output['time'] = $now = time();
 		if (!$this->oldFile) {
 			$this->update();
 		} else {
@@ -68,7 +68,7 @@ class Flags {
 			if ($now - $this->oldFile->time > 60 * 60 * 24) {
 				$this->update();
 			} else {
-				$this->switches = $this->oldFile;
+				$this->output = $this->oldFile;
 			}
 		}
 
@@ -77,7 +77,7 @@ class Flags {
 
 	private function output() {
 		Header('Content-Type: application/json');
-		echo json_encode($this->switches, JSON_FORCE_OBJECT);
+		echo json_encode($this->output, JSON_FORCE_OBJECT);
 	}
 
 	private function update() {
@@ -90,17 +90,22 @@ class Flags {
 			$this->addSwitch('..' . substr($url, 47, -3), $url, $comment, $condition, false, false);
 			$this->parse($this->get($url));
 		}
-		file_put_contents($this->publicOutput, json_encode($this->switches, JSON_FORCE_OBJECT));
+		$this->addDeletedSwitches();
+		file_put_contents($this->publicOutput, json_encode($this->output, JSON_FORCE_OBJECT));
 	}
 
-	private function addSwitch($name, $orginal, $comment, $condition, $new, $deleted) {
-		$this->switches['flags'][$name]  = array(
+	private function addSwitch($name, $orginal, $comment, $condition, $new, $deleted = false) {
+		$this->output['switches'][$name] = array(
 		 	'original' => $url,
 			'comment' => $comment,
 			'condition' => $condition,
 			'new' => $new,
 			'deleted' => $deleted
 		);
+	}
+
+	private function addDeletedSwitches() {
+		$diff = array_diff_key($this->output['switches'], $this->oldFile->switches);
 	}
 
 	private function get($url) {
@@ -175,7 +180,7 @@ class Flags {
 			$flag = '!';
 		}
 
-		$search = array_search($const, $this->switches['constants']);
+		$search = array_search($const, $this->output['constants']);
 		$int = true;
 		if ($search === false) {
 			$search = '';
@@ -184,7 +189,7 @@ class Flags {
 				$search = $flag;
 				$int = false;
 			}
-			$search .= array_search($const, $this->switches['constants']);
+			$search .= array_search($const, $this->output['constants']);
 		}
 		if ($int)
 			$search = intval($search);
@@ -202,7 +207,7 @@ class Flags {
 			$name = $spans[2] . ': "' . $name . '"';
 		}
 
-		$this->addSwitch($name, html_entity_decode($spans[2]->innertext), $this->preString, $this->openCondition, !isset($this->oldFile->flags->{$name}), $deleted);
+		$this->addSwitch($name, html_entity_decode($spans[2]->innertext), $this->preString, $this->openCondition, !isset($this->oldFile->switches->{$name}));
 		$this->preString = '';
 	}
 
@@ -222,4 +227,4 @@ class Flags {
 	}
 }
 
-new Flags();
+new SwitchesParser();
