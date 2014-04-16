@@ -23,15 +23,18 @@
 		},
 
 		buildTable: function() {
-			var html = '', title, add = ''
+			var html = '', title
 			$.getJSON('flags.json', function(content) {
-				$.each(content.flags, function(i, v) {
+				$.each(content.switches, function(i, v) {
 					title = this.textParseCondition(v.condition, content.constants)
 					if (title !== '')
 						title = ' data-toggle="tootltip" data-placement="left" data-trigger="manual" data-show="true" title="' + title + '"'
 					html += '<tr class="switch' + this.parseCondition(v.condition) + '"' + title + '>'
+					var add
 					if (v.new)
 						add = ' <span class="label label-primary">new</span>'
+					if (v.deleted)
+						add = '<span class="label label-danger">deleted</span>'
 					html += '<td class="switch" id="' + encodeURIComponent(i) + '">' + i + add + ' <a href="#' + encodeURIComponent(i) + '" class="anchor">#</a></td>'
 					html += '<td>' + v.comment.replace(/[^:](\/\/.+)/g, '<br><span class="text-muted">$1</span>').replace(/(\. |:(?!\/| |[A-Z0-9:]))/g, '$1<br>').replace(/  /g, '<br>&nbsp;&nbsp;').replace(/(<br>&nbsp;&nbsp;){3}/g, '').replace(/--((\w|-)+)/g, '<a href="#$1">--$1</a>') + '</td>' // only break after ":char", as ": " probably tells there is something in the same line after it
 					html += '</tr>'

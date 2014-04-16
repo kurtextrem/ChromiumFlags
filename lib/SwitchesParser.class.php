@@ -1,12 +1,15 @@
 <?php
+namespace crflags;
+require_once 'AbstractSourceParser.class.php';
 error_reporting(E_ALL);
-require_once 'simple_html_dom.php';
+set_time_limit(0);
 
-class SwitchesParser {
-	protected $urls = [
+class SwitchesParser extends AbstractSourceParser {
+	// Pre
+	public $urls = array(
 		'http://src.chromium.org/viewvc/chrome/trunk/src/chrome/common/chrome_switches.cc', // largest first to build the base constants
-		'http://src.chromium.org/viewvc/chrome/trunk/src/content/public/common/content_switches.cc',
 		'http://src.chromium.org/viewvc/chrome/trunk/src/base/base_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/content/public/common/content_switches.cc',
 		'http://src.chromium.org/viewvc/chrome/trunk/src/apps/switches.cc',
 		'http://src.chromium.org/viewvc/chrome/trunk/src/ash/ash_switches.cc',
 		'http://src.chromium.org/viewvc/chrome/trunk/src/ipc/ipc_switches.cc',
@@ -18,54 +21,33 @@ class SwitchesParser {
 		'http://src.chromium.org/viewvc/chrome/trunk/src/components/policy/core/common/policy_switches.cc',
 		'http://src.chromium.org/viewvc/chrome/trunk/src/components/precache/core/precache_switches.cc',
 		'http://src.chromium.org/viewvc/chrome/trunk/src/components/signin/core/common/signin_switches.cc'
-	];
-
-	protected $publicOutput = '../flags.json';
-
-	protected $parseActions = array(
-	                // class parse
-		'k' => 'determination',
-
-		'cp' => 'determination',
-
-		's' => 'constantName',
-
-		'kt' => 'boolConst', // ash_switches
-
-		'p' => 'endBracket',
-
-		'c1' => 'comment',
-
-		// 3 chars
-		'con' => 'constant',
-
-		'nam' => 'namespace',
-
-		'#in' => 'include',
-
-		'#if' => 'condition',
-
-		'#en' => 'endCondition',
-
-		'#el' => 'elseCondition'
-
 	);
 
-	private $preString = '';
-	private $original = '';
-	private $openCondition = null;
-	private $output = array('time' => null, 'switches' => array(), 'constants' => array());
-	private $oldFile;
+	// Mid parsing
+	protected $oldFile;
+	protected $preString = '';
+	protected $original = '';
+	protected $openCondition = null;
+
+	// Output
+	public $publicOutputFile = '../flags.json';
+	protected $output = array('time' => null, 'switches' => array(), 'constants' => array());
 
 	public function __construct() {
-		//@unlink($this->publicOutput);
-		$this->oldFile = @file_get_contents($this->publicOutput);
+		$this->cacheLife = 60 * 60 * 24;
+		$this->execute();
+	}
+
+	public function execute() {
+		if ($this->development === 2 || $this->development === 3)
+			@unlink($this->publicOutputFile);
+		$this->oldFile = @file_get_contents($this->publicOutputFile);
 		$this->output['time'] = $now = time();
 		if (!$this->oldFile) {
 			$this->update();
 		} else {
-			$this->oldFile = json_decode($this->oldFile);
-			if ($now - $this->oldFile->time > 60 * 60 * 24) {
+			$this->oldFile = json_decode($this->oldFile, true);
+			if ($now - $this->oldFile['time'] > $this->cacheLife) {
 				$this->update();
 			} else {
 				$this->output = $this->oldFile;
@@ -75,12 +57,7 @@ class SwitchesParser {
 		$this->output();
 	}
 
-	private function output() {
-		Header('Content-Type: application/json');
-		echo json_encode($this->output, JSON_FORCE_OBJECT);
-	}
-
-	private function update() {
+	public function update() {
 		foreach($this->urls as $url) {
 			$comment = $condition = '';
 			if ($url === 'http://src.chromium.org/viewvc/chrome/trunk/src/chromeos/chromeos_switches.cc') {
@@ -91,12 +68,12 @@ class SwitchesParser {
 			$this->parse($this->get($url));
 		}
 		$this->addDeletedSwitches();
-		file_put_contents($this->publicOutput, json_encode($this->output, JSON_FORCE_OBJECT));
+		parent::update();
 	}
 
-	private function addSwitch($name, $orginal, $comment, $condition, $new, $deleted = false) {
+	protected function addSwitch($name, $original, $comment, $condition, $new, $deleted = false) {
 		$this->output['switches'][$name] = array(
-		 	'original' => $url,
+		 	'original' => $original,
 			'comment' => $comment,
 			'condition' => $condition,
 			'new' => $new,
@@ -104,60 +81,12 @@ class SwitchesParser {
 		);
 	}
 
-	private function addDeletedSwitches() {
-		$diff = array_diff_key($this->output['switches'], $this->oldFile->switches);
-	}
-
-	private function get($url) {
-		//file_put_contents('test.html', file_get_contents($url));
-		return file_get_html($url); //file_get_html($url); //file_get_html('test.html');
-	}
-
-	private function parse($html) {
-		foreach ($html->find('.vc_file_line_text') as $content) {
-			$content = $content->childNodes();
-			if(isset($content[0]))
-				$this->call($content);
+	protected function addDeletedSwitches() {
+		$diff = array_diff_key($this->output['switches'], $this->oldFile['switches']);
+		foreach ($diff as $key => $switch) {
+			if ($this->output['time'] - $switch['deleted'] < $this->cacheLife * 30) // if switch was removed > 30 days ago drop it
+				$this->addSwitch($key, $switch['original'], $switch['comment'], $switch['condition'], false, $switch['deleted']);
 		}
-	}
-
-	private function call($spans, $step2 = false, $length = 3) {
-		if (!$step2)
-			$string = str_replace('pygments-', '', $spans[0]->class);
-		else
-			$string = substr($step2, 0, $length);
-		if (isset($this->parseActions[$string])) {
-			$name = 'handle'  . ucfirst($this->parseActions[$string]);
-			if (method_exists($this, $name)) {
-				$this->{$name}($spans);
-			}
-		}
-	}
-
-	private function handleDetermination($spans) {
-		$this->call($spans, html_entity_decode($spans[0]->innertext));
-	}
-
-	protected function handleComment($spans) {
-		$content = html_entity_decode($spans[0]->innertext);
-		if (strpos($content, '------')) return $this->preString = ''; // workaround for the first lines in chrome_switches
-		$this->preString .= preg_replace('~^// ~', '', $content) . ' ';
-	}
-
-	protected function handleCondition($spans) {
-		$content = html_entity_decode($spans[0]->innertext);
-		// workaround for #ifndef NDEBUG
-		$content = preg_replace('/#ifndef (.+)/', '#if !defined($1)', $content);
-		// workaround for the future
-		$content = preg_replace('/#ifdef (.+)/', '#if defined($1)', $content);
-
-		$content = str_replace('#if ', '', $content);
-		$this->openCondition = $this->parseCondition($content);
-	}
-
-	protected function handleElseCondition($spans) {
-		$this->openCondition = preg_replace('/([ ]?)(\d+)/', '$1!$2', $this->openCondition);
-		$this->openCondition = str_replace('!', '', $this->openCondition);
 	}
 
 	protected function parseCondition($condition) {
@@ -184,7 +113,7 @@ class SwitchesParser {
 		$int = true;
 		if ($search === false) {
 			$search = '';
-			$this->switches['constants'][] = $const;
+			$this->output['constants'][] = $const;
 			if ($flag) {
 				$search = $flag;
 				$int = false;
@@ -196,8 +125,25 @@ class SwitchesParser {
 		return $search;
 	}
 
-	protected function handleEndCondition($spans) {
-		$this->openCondition = null;
+	protected function handleDetermination($spans) {
+		$this->call($spans, html_entity_decode($spans[0]->innertext));
+	}
+
+	protected function handleComment($spans) {
+		$content = html_entity_decode($spans[0]->innertext);
+		if (strpos($content, '------')) return $this->preString = ''; // workaround for the first lines in chrome_switches
+		$this->preString .= preg_replace('~^// ~', '', $content) . ' ';
+	}
+
+	protected function handleCondition($spans) {
+		$content = html_entity_decode($spans[0]->innertext);
+		// workaround for #ifndef NDEBUG
+		$content = preg_replace('/#ifndef (.+)/', '#if !defined($1)', $content);
+		// workaround for the future
+		$content = preg_replace('/#ifdef (.+)/', '#if defined($1)', $content);
+
+		$content = str_replace('#if ', '', $content);
+		$this->openCondition = $this->parseCondition($content);
 	}
 
 	protected function handleConstant($spans) {
@@ -207,7 +153,7 @@ class SwitchesParser {
 			$name = $spans[2] . ': "' . $name . '"';
 		}
 
-		$this->addSwitch($name, html_entity_decode($spans[2]->innertext), $this->preString, $this->openCondition, !isset($this->oldFile->switches->{$name}));
+		$this->addSwitch($name, html_entity_decode($spans[2]->innertext), $this->preString, $this->openCondition,  !isset($this->oldFile['switches'][$name]));
 		$this->preString = '';
 	}
 
@@ -216,6 +162,15 @@ class SwitchesParser {
 		$spans[5] = $spans[0];
 		$this->handleConstant($spans);
 		$this->original = '';
+	}
+
+	protected function handleElseCondition($spans) {
+		$this->openCondition = preg_replace('/([ ]?)(\d+)/', '$1!$2', $this->openCondition);
+		$this->openCondition = str_replace('!', '', $this->openCondition);
+	}
+
+	protected function handleEndCondition($spans) {
+		$this->openCondition = null;
 	}
 
 	protected function handleNamespace ($spans) {
