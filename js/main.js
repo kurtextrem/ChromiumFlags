@@ -7,36 +7,44 @@
 		construct: App,
 
 		classToAdd: {
-			0: 'success',
-			1: 'active',
+			0: 'fade',
+			1: 'success',
 			2: 'fade',
 			3: 'fade',
-			4: 'fade',
-			5: 'active fade',
-			6: 'info',
-			7: 'success fade',
-			8: 'info',
+			4: 'active',
+			5: 'info fade',
+			6: 'success fade',
+			7: 'info',
+			8: 'fade',
 			9: 'fade',
 			10: 'fade',
 			11: 'fade',
-			12: 'fade'
+			12: 'fade',
+			13: 'active fade'
 		},
 
 		buildTable: function() {
-			var html = '', title, add = ''
+			var html = '', title
 			$.getJSON('flags.json', function(content) {
-				$.each(content.flags, function(i, v) {
+				$.each(content.switches, function(i, v) {
 					title = this.textParseCondition(v.condition, content.constants)
 					if (title !== '')
 						title = ' data-toggle="tootltip" data-placement="left" data-trigger="manual" data-show="true" title="' + title + '"'
 					html += '<tr class="switch' + this.parseCondition(v.condition) + '"' + title + '>'
+					var add = ''
 					if (v.new)
 						add = ' <span class="label label-primary">new</span>'
+					if (v.deleted)
+						add = '<span class="label label-danger">deleted</span>'
 					html += '<td class="switch" id="' + encodeURIComponent(i) + '">' + i + add + ' <a href="#' + encodeURIComponent(i) + '" class="anchor">#</a></td>'
 					html += '<td>' + v.comment.replace(/[^:](\/\/.+)/g, '<br><span class="text-muted">$1</span>').replace(/(\. |:(?!\/| |[A-Z0-9:]))/g, '$1<br>').replace(/  /g, '<br>&nbsp;&nbsp;').replace(/(<br>&nbsp;&nbsp;){3}/g, '').replace(/--((\w|-)+)/g, '<a href="#$1">--$1</a>') + '</td>' // only break after ":char", as ": " probably tells there is something in the same line after it
 					html += '</tr>'
 				}.bind(this))
 				$('tbody').append(html)
+				var $urls = $('.urls')
+				$.each(content.urls, function(i, url) {
+					$urls.append($('<a>').attr('href', url).html(url.match(/\/([^\/]+)\.cc$/)[1] + ' &middot; '))
+				})
 				$('.time').text(new Date( +(content.time + '000')))
 				$('.table').tablesort()
 				this.registerEvents()
