@@ -270,7 +270,6 @@ class SwitchesParser extends AbstractSourceParser {
 		$spans[2] = $this->original;
 		$spans[5] = $spans[0];
 		$this->handleConstant($spans);
-		$this->original = '';
 	}
 
 	/**
