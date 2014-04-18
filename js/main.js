@@ -29,7 +29,7 @@
 				$.each(content.switches, function(i, v) {
 					title = this.textParseCondition(v.condition, content.constants)
 					if (title !== '')
-						title = ' data-toggle="tootltip" data-placement="left" data-trigger="manual" data-show="true" title="' + title + '"'
+						title = ' data-toggle="tootltip" data-placement="left" data-trigger="manual" data-show="true" data-title="' + title + '"'
 					html += '<tr class="switch' + this.parseCondition(v.condition) + '"' + title + '>'
 					var add = ''
 					if (v.new)
@@ -82,10 +82,13 @@
 		},
 
 		registerEvents: function() {
+			var $small = $('<small>')
+			$('.page-header > h1').append($small.text(' Adding tooltips, page unresponsive for a second...'))
 			window.setTimeout(function() {
-				//$('[data-toggle="tooltip"]').tooltip()
-				//$('[data-show="true"]').tooltip('show')
-			}, 2000) // hurts performance so much
+				$('[data-toggle="tooltip"]').tooltip()
+				$('[data-show="true"]').tooltip('show')
+				$small.text(' Done').delay(500).fadeOut('slow')
+			}, 200) // hurts performance so much
 			if (location.hash !== '') {
 				var elem = $(location.hash)
 				$('html').animate({
