@@ -51,6 +51,8 @@ class SwitchesParser extends AbstractSourceParser {
 	public $publicOutputFile = '../flags.json';
 	/** @see 	AbstractSourceParser::$output */
 	protected $output = array('time' => null, 'switches' => array(), 'constants' => array(), 'urls' => array());
+	protected $new = array();
+	protected $deleted = array();
 
 
 	/**
@@ -88,6 +90,8 @@ class SwitchesParser extends AbstractSourceParser {
 
 		$this->output();
 	}
+
+	public function output() { }
 
 	/**
 	 * Loops through the url and starts the parser.
@@ -130,9 +134,9 @@ class SwitchesParser extends AbstractSourceParser {
 	 * @param  	string     	$comment  	Comments of the switch
 	 * @param  	mixed     	$condition 	Conditions
 	 * @param  	boolean     	$new       	Is new?
-	 * @param  	boolean    	$deleted   	Is deleted?
+	 * @param  	int    		$deleted   	If deleted timestamp, else zero
 	 */
-	protected function addSwitch($name, $original, $comment, $condition, $new, $deleted = false) {
+	protected function addSwitch($name, $original, $comment, $condition, $new, $deleted = 0) {
 		$this->output['switches'][$name] = array(
 		 	'original' => $original,
 			'comment' => $comment,
@@ -140,6 +144,14 @@ class SwitchesParser extends AbstractSourceParser {
 			'new' => $new,
 			'deleted' => $deleted
 		);
+		if ($new) {
+			$this->new[] = $name;
+			$original = 'NEW: ';
+		} elseif ($deleted) {
+			$this->deleted[] = $name;
+			$original = 'DELETED: ';
+		}
+		echo $original . '<a href="../index.html#' . $name . '">' . $name . '</a> - ' . $comment . '<br>';
 	}
 
 	/**
