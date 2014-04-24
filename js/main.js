@@ -25,7 +25,7 @@
 
 		buildTable: function() {
 			var html = '', title
-			$.getJSON('http://kurtextrem.de/chromium/flags.php', function(content) {
+			$.getJSON('http://kurtextrem.de/chromium/flags.php?callback=?', function(content) {
 				$.each(content.switches, function(i, v) {
 					title = this.textParseCondition(v.condition, content.constants)
 					if (title !== '')
