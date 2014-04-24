@@ -35,7 +35,7 @@
 					if (v.new)
 						add = ' <span class="label label-primary" data-toggle="tooltip" data-title="' + new Date( +(v.new + '000')) + '">new</span>'
 					if (v.deleted)
-						add = '<span class="label label-danger">deleted</span>'
+						add = '<span class="label label-danger" data-toggle="tooltip" data-title="' + new Date( +(v.deleted + '000')) + '">deleted</span>'
 					html += '<td class="switch" id="' + encodeURIComponent(i) + '" tabindex="0">' + i + add + ' <a  class="anchor" href="#' + encodeURIComponent(i) + '">#</a></td>'
 					html += '<td>' + v.comment.replace(/[^:](\/\/.+)/g, '<br><span class="text-muted">$1</span>').replace(/(\. |:(?!\/| |[A-Z0-9:]))/g, '$1<br>').replace(/  /g, '<br>&nbsp;&nbsp;').replace(/(<br>&nbsp;&nbsp;){3}/g, '').replace(/--((\w|-)+)/g, '<a href="#$1">--$1</a>') + '</td>' // only break after ":char", as ": " probably tells there is something in the same line after it
 					html += '</tr>'
