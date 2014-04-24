@@ -33,7 +33,7 @@
 					html += '<tr class="switch' + this.parseCondition(v.condition) + '"' + title + '>'
 					var add = ''
 					if (v.new)
-						add = ' <span class="label label-primary">new</span>'
+						add = ' <span class="label label-primary" data-toggle="tooltip" data-title="' + new Date( +(v.new + '000')) + '">new</span>'
 					if (v.deleted)
 						add = '<span class="label label-danger">deleted</span>'
 					html += '<td class="switch" id="' + encodeURIComponent(i) + '" tabindex="0">' + i + add + ' <a  class="anchor" href="#' + encodeURIComponent(i) + '">#</a></td>'
@@ -41,10 +41,10 @@
 					html += '</tr>'
 				}.bind(this))
 				$('tbody').append(html)
-				var $urls = $('.urls')
-				$.each(content.urls, function(i, url) {
-					$urls.append($('<a>').attr('href', url).html(url.match(/\/([^\/]+)\.cc$/)[1] + ' &middot; '))
+				content.urls = $.map(content.urls, function(v, i) {
+					return '<a href="' + v + '">' + v.match(/\/([^\/]+)\.cc$/)[1] + '</a>'
 				})
+				$('.urls').append(content.urls.join(' &middot; '))
 				$('.time').text(new Date( +(content.time + '000')))
 				$('.table').tablesort()
 				this.registerEvents()

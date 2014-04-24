@@ -106,7 +106,7 @@ class SwitchesParser extends AbstractSourceParser {
 				$comment = '<b>The switches below only work with Chrome OS</b>';
 				$condition = 6;
 			}
-			$this->addSwitch('..' . substr($url, 47, -3), $url, $comment, $condition, false);
+			$this->addSwitch('..' . substr($url, 47, -3), $url, $comment, $condition, 0);
 			$this->parse($this->get($url));
 		}
 		$this->addDeletedSwitches();
@@ -133,7 +133,7 @@ class SwitchesParser extends AbstractSourceParser {
 	 * @param  	string     	$original  	Original name of the switch
 	 * @param  	string     	$comment  	Comments of the switch
 	 * @param  	mixed     	$condition 	Conditions
-	 * @param  	boolean     	$new       	Is new?
+	 * @param  	boolean     	$new       	If new timestamp, else zero
 	 * @param  	int    		$deleted   	If deleted timestamp, else zero
 	 */
 	protected function addSwitch($name, $original, $comment, $condition, $new, $deleted = 0) {
@@ -146,12 +146,13 @@ class SwitchesParser extends AbstractSourceParser {
 		);
 		if ($new) {
 			$this->new[] = $name;
-			$original = 'NEW: ';
+			$new = 'NEW: ';
 		} elseif ($deleted) {
 			$this->deleted[] = $name;
-			$original = 'DELETED: ';
+			$new = 'DELETED: ';
 		}
-		echo $original . '<a href="../index.html#' . $name . '">' . $name . '</a> - ' . $comment . '<br>';
+		if (is_string($new))
+			echo $new . '<a href="../index.html#' . $name . '">' . $name . '</a> - ' . $comment . '<br>';
 	}
 
 	/**
@@ -164,7 +165,7 @@ class SwitchesParser extends AbstractSourceParser {
 		$diff = array_diff_key($this->output['switches'], $this->oldFile['switches']);
 		foreach ($diff as $key => $switch) {
 			if ($this->output['time'] - $switch['deleted'] < $this->cacheLife * 30) // if switch was removed > 30 days ago drop it
-				$this->addSwitch($key, $switch['original'], $switch['comment'], $switch['condition'], false, $switch['deleted']);
+				$this->addSwitch($key, $switch['original'], $switch['comment'], $switch['condition'], 0, $switch['deleted']);
 		}
 	}
 
@@ -267,7 +268,9 @@ class SwitchesParser extends AbstractSourceParser {
 			$name = $spans[2] . ': "' . $name . '"';
 		}
 
-		$this->addSwitch($name, html_entity_decode($spans[2]->innertext), $this->preString, $this->openCondition, !isset($this->oldFile['switches'][$name]));
+		$new = !isset($this->oldFile['switches'][$name]) ? $this->output['time'] : $this->oldFile['switches'][$name]['new'];
+		$new = $this->output['time'] - $new < 60 * 60 * 24 * 10 ? $new : 0;
+		$this->addSwitch($name, html_entity_decode($spans[2]->innertext), $this->preString, $this->openCondition, $new); // only new if added in the past 10 days
 		$this->preString = '';
 	}
 
