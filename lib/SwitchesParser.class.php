@@ -148,12 +148,12 @@ class SwitchesParser extends AbstractSourceParser {
 			'new' => $new,
 			'deleted' => $deleted
 		);
-		if ($new) {
-			$this->new[] = $name;
-			$new = 'NEW: ';
-		} elseif ($deleted) {
+		if ($deleted) {
 			$this->deleted[] = $name;
 			$new = 'DELETED: ';
+		} elseif ($new) {
+			$this->new[] = $name;
+			$new = 'NEW: ';
 		}
 		if (is_string($new))
 			echo $new . '<a href="../index.html#' . $name . '">' . $name . '</a> - ' . $comment . '<br>';
