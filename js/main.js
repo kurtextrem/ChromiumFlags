@@ -42,7 +42,7 @@
 				}.bind(this))
 				$('tbody').append(html)
 				content.urls = $.map(content.urls, function(v, i) {
-					return '<a href="' + v + '">' + v.match(/\/([^\/]+)\.cc$/)[1] + '</a>'
+					return '<a href="' + v + '">' + v.match(/\/([^\/]+)\.(cc|java)$/)[1] + '</a>'
 				})
 				$('.urls').append(content.urls.join(' &middot; '))
 				$('.time').text(new Date( +(content.time + '000')))
