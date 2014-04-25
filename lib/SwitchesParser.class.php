@@ -33,7 +33,13 @@ class SwitchesParser extends AbstractSourceParser {
 		'http://src.chromium.org/viewvc/chrome/trunk/src/components/password_manager/core/common/password_manager_switches.cc',
 		'http://src.chromium.org/viewvc/chrome/trunk/src/components/policy/core/common/policy_switches.cc',
 		'http://src.chromium.org/viewvc/chrome/trunk/src/components/precache/core/precache_switches.cc',
-		'http://src.chromium.org/viewvc/chrome/trunk/src/components/signin/core/common/signin_switches.cc'
+		'http://src.chromium.org/viewvc/chrome/trunk/src/components/signin/core/common/signin_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/ui/base/ui_base_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/content/shell/common/shell_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/components/nacl/common/nacl_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/ui/app_list/app_list_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/components/infobars/core/infobars_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/components/cloud_devices/common/cloud_devices_switches.cc'
 	);
 
 	// Mid parsing
@@ -224,6 +230,17 @@ class SwitchesParser extends AbstractSourceParser {
 	}
 
 	/**
+	 * If it is unclear what java handler to call, this method should determine it.
+	 *
+	 * @author 	Jacob Groß (kurtextrem)
+	 * @date   	2014-04-25
+	 * @param  	array     		$spans 		Spans to check
+	 */
+	protected function handleJavaDetermination($spans) {
+		$this->call($spans, html_entity_decode($spans[1]->innertext));
+	}
+
+	/**
 	 * Handles comments.
 	 *
 	 * @author 	Jacob Groß (kurtextrem)
@@ -262,6 +279,26 @@ class SwitchesParser extends AbstractSourceParser {
 	 * @param  	array     		$spans 		Spans to check
 	 */
 	protected function handleConstant($spans) {
+		if (!isset($spans[5]->innertext) || !$this->original) return $this->original = $spans[2]; // when the constant name is in the next line
+		$name = str_replace('"', '', html_entity_decode($spans[5]->innertext));
+		if (strlen($name) < 3) { // for values like ProfilerTimingDisabledValue from base_switches
+			$name = $spans[2] . ': "' . $name . '"';
+		}
+
+		$new = !isset($this->oldFile['switches'][$name]) ? $this->output['time'] : $this->oldFile['switches'][$name]['new'];
+		$new = $this->output['time'] - $new < 60 * 60 * 24 * 10 ? $new : 0;
+		$this->addSwitch($name, html_entity_decode($spans[2]->innertext), $this->preString, $this->openCondition, $new); // only new if added in the past 10 days
+		$this->preString = '';
+	}
+
+	/**
+	 * Handles java constants (switches) and adds them together with its comments to the output. (Clears the comment buffer preString)
+	 *
+	 * @author 	Jacob Groß (kurtextrem)
+	 * @date   	2014-04-16
+	 * @param  	array     		$spans 		Spans to check
+	 */
+	protected function handleJavaConstant($spans) {
 		if (!isset($spans[5]->innertext) || !$this->original) return $this->original = $spans[2]; // when the constant name is in the next line
 		$name = str_replace('"', '', html_entity_decode($spans[5]->innertext));
 		if (strlen($name) < 3) { // for values like ProfilerTimingDisabledValue from base_switches
@@ -331,6 +368,17 @@ class SwitchesParser extends AbstractSourceParser {
 	 * @param  	array     		$spans 		Spans to check
 	 */
 	protected function handleNamespace ($spans) {
+		$this->preString = '';
+	}
+
+	/**
+	 * Handles namespace, clears the comment buffer to prevent file comments from showing up as switch comment.
+	 *
+	 * @author 	Jacob Groß (kurtextrem)
+	 * @date   	2014-04-16
+	 * @param  	array     		$spans 		Spans to check
+	 */
+	protected function handleJavaNamespace ($spans) {
 		$this->preString = '';
 	}
 

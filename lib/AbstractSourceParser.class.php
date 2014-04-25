@@ -22,11 +22,15 @@ abstract class AbstractSourceParser extends AbstractParser {
 	                // class parse
 		'k' => 'determination',
 
+		'kd' => 'javaDetermination',
+
 		'cp' => 'determination',
 
 		's' => 'constantName',
 
 		'kt' => 'boolConstant', // ash_switches
+
+		'kn' => 'package',
 
 		'p' => 'endBracket',
 
@@ -34,6 +38,12 @@ abstract class AbstractSourceParser extends AbstractParser {
 
 		// 3 chars
 		'con' => 'constant',
+
+		'sta' => 'javaConstant',
+
+		'abs' => 'javaNamespace',
+
+		'pri' => 'private',
 
 		'nam' => 'namespace',
 
@@ -135,10 +145,16 @@ abstract class AbstractSourceParser extends AbstractParser {
 	protected function handleComment($spans) { }
 	/** Handler for constants (switches). */
 	protected function handleConstant($spans) { }
+	/** Handler for java constants (switches). */
+	protected function handleJavaConstant($spans) { }
 	/** Handler for constant names (original switch names). */
 	protected function handleConstantName($spans) { }
+	/** Handler for java constants (switches). */
+	protected function handlePrivate($spans) { }
 	/** Determines which handler to call. */
 	protected function handleDetermination($spans) { }
+	/** Determines which (java) handler to call. */
+	protected function handleJavaDetermination($spans) { }
 	/** Handler for conditions' ends. */
 	protected function handleEndCondition($spans) { }
 	/** Handler for brackets' ends. */
@@ -149,6 +165,10 @@ abstract class AbstractSourceParser extends AbstractParser {
 	protected function handleExternConstant($spans) { }
 	/** Handler for 'include'. */
 	protected function handleInclude($spans) { }
+	/** Handler for 'package' (java). */
+	protected function handlePackage($spans) { }
 	/** Handler for 'namespace'. */
 	protected function handleNamespace($spans) { }
+	/** Handler for Java abstract classes  */
+	protected function handleJavaNamespace($spans) { }
 }
