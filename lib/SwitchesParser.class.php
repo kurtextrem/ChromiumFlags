@@ -166,12 +166,12 @@ class SwitchesParser extends AbstractSourceParser {
 	 * @date   	2014-04-16
 	 */
 	protected function addDeletedSwitches() {
-		$diff = array_diff_key($this->output['switches'], $this->oldFile['switches']);
+		$diff = array_diff_key($this->oldFile['switches'], $this->output['switches']);
 		foreach ($diff as $key => $switch) {
 			if ($switch['deleted'] === 0)
 				$switch['deleted'] = $this->output['time'];
-			if ($this->output['time'] - $switch['deleted'] < $this->cacheLife * 30 && !$switch['new'] && strpos($switch['original'], 'viewvc') === false) // if switch was removed > 30 days ago drop it
-				$this->addSwitch($key, $switch['original'], $switch['comment'], $switch['condition'], 0, $switch['deleted']);
+			if ($this->output['time'] - $switch['deleted'] < $this->cacheLife * 30 && strpos($switch['original'], 'viewvc') === false) // if switch was removed > 30 days ago drop it
+				$this->addSwitch($key, $switch['original'], $switch['comment'], $switch['condition'], $switch['new'], $switch['deleted']);
 		}
 	}
 
@@ -286,7 +286,7 @@ class SwitchesParser extends AbstractSourceParser {
 		}
 
 		$new = !isset($this->oldFile['switches'][$name]) ? $this->output['time'] : $this->oldFile['switches'][$name]['new'];
-		$new = $this->output['time'] - $new < 60 * 60 * 24 * 10 ? $new : 0;
+		$new = $this->output['time'] - $new < $this->cacheLife* 10 ? $new : 0;
 		$this->addSwitch($name, html_entity_decode($spans[2]->innertext), $this->preString, $this->openCondition, $new); // only new if added in the past 10 days
 		$this->preString = '';
 	}
