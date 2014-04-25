@@ -39,7 +39,8 @@ class SwitchesParser extends AbstractSourceParser {
 		'http://src.chromium.org/viewvc/chrome/trunk/src/components/nacl/common/nacl_switches.cc',
 		'http://src.chromium.org/viewvc/chrome/trunk/src/ui/app_list/app_list_switches.cc',
 		'http://src.chromium.org/viewvc/chrome/trunk/src/components/infobars/core/infobars_switches.cc',
-		'http://src.chromium.org/viewvc/chrome/trunk/src/components/cloud_devices/common/cloud_devices_switches.cc'
+		'http://src.chromium.org/viewvc/chrome/trunk/src/components/cloud_devices/common/cloud_devices_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/content/public/android/java/src/org/chromium/content/common/ContentSwitches.java'
 	);
 
 	// Mid parsing
@@ -91,13 +92,10 @@ class SwitchesParser extends AbstractSourceParser {
 				$this->update();
 			} else {
 				$this->output = $this->oldFile;
+				$this->output();
 			}
 		}
-
-		$this->output();
 	}
-
-	public function output() { }
 
 	/**
 	 * Loops through the url and starts the parser.
@@ -170,7 +168,9 @@ class SwitchesParser extends AbstractSourceParser {
 	protected function addDeletedSwitches() {
 		$diff = array_diff_key($this->output['switches'], $this->oldFile['switches']);
 		foreach ($diff as $key => $switch) {
-			if ($this->output['time'] - $switch['deleted'] < $this->cacheLife * 30) // if switch was removed > 30 days ago drop it
+			if ($switch['deleted'] === 0)
+				$switch['deleted'] = $this->output['time'];
+			if ($this->output['time'] - $switch['deleted'] < $this->cacheLife * 30 && !$switch['new'] && strpos($switch['original'], 'viewvc') === false) // if switch was removed > 30 days ago drop it
 				$this->addSwitch($key, $switch['original'], $switch['comment'], $switch['condition'], 0, $switch['deleted']);
 		}
 	}
