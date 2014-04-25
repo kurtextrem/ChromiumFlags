@@ -41,10 +41,10 @@
 					html += '</tr>'
 				}.bind(this))
 				$('tbody').append(html)
-				var $urls = $('.urls')
-				$.each(content.urls, function(i, url) {
-					$urls.append($('<a>').attr('href', url).html(url.match(/\/([^\/]+)\.cc$/)[1] + ' &middot; '))
+				content.urls = $.map(content.urls, function(v, i) {
+					return '<a href="' + v + '">' + v.match(/\/([^\/]+)\.(cc|java)$/)[1] + '</a>'
 				})
+				$('.urls').append(content.urls.join(' &middot; '))
 				$('.time').text(new Date( +(content.time + '000')))
 				$('.table').tablesort()
 				this.registerEvents()
