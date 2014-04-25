@@ -299,16 +299,10 @@ class SwitchesParser extends AbstractSourceParser {
 	 * @param  	array     		$spans 		Spans to check
 	 */
 	protected function handleJavaConstant($spans) {
-		if (!isset($spans[5]->innertext) || !$this->original) return $this->original = $spans[2]; // when the constant name is in the next line
-		$name = str_replace('"', '', html_entity_decode($spans[5]->innertext));
-		if (strlen($name) < 3) { // for values like ProfilerTimingDisabledValue from base_switches
-			$name = $spans[2] . ': "' . $name . '"';
-		}
-
-		$new = !isset($this->oldFile['switches'][$name]) ? $this->output['time'] : $this->oldFile['switches'][$name]['new'];
-		$new = $this->output['time'] - $new < 60 * 60 * 24 * 10 ? $new : 0;
-		$this->addSwitch($name, html_entity_decode($spans[2]->innertext), $this->preString, $this->openCondition, $new); // only new if added in the past 10 days
-		$this->preString = '';
+		if (!isset($spans[6]->innertext) || !$this->original) return $this->original = $spans[4]; // when the constant name is in the next line
+		$spans[5] = $spans[6];
+		$spans[2] = $spans[4];
+		$this->handleConstant($spans);
 	}
 
 	/**
@@ -372,10 +366,10 @@ class SwitchesParser extends AbstractSourceParser {
 	}
 
 	/**
-	 * Handles namespace, clears the comment buffer to prevent file comments from showing up as switch comment.
+	 * Handles (java) namespace, clears the comment buffer to prevent file comments from showing up as switch comment.
 	 *
 	 * @author 	Jacob Groß (kurtextrem)
-	 * @date   	2014-04-16
+	 * @date   	2014-04-25
 	 * @param  	array     		$spans 		Spans to check
 	 */
 	protected function handleJavaNamespace ($spans) {
@@ -390,6 +384,17 @@ class SwitchesParser extends AbstractSourceParser {
 	 * @param  	array     		$spans 		Spans to check
 	 */
 	protected function handleInclude ($spans) {
+		$this->preString = '';
+	}
+
+	/**
+	 * Handles 'package' (java), clears the comment buffer to prevent file comments from showing up as switch comment.
+	 *
+	 * @author 	Jacob Groß (kurtextrem)
+	 * @date   	2014-04-25
+	 * @param  	array     		$spans 		Spans to check
+	 */
+	protected function handlePackage ($spans) {
 		$this->preString = '';
 	}
 }
