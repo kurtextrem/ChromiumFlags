@@ -213,3 +213,5 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+lib/deleted.test.php
+lib/flags.old.json
