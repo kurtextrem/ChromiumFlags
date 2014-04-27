@@ -4,8 +4,12 @@ require_once 'AbstractSourceParser.class.php';
 
 // report all errors
 error_reporting(E_ALL);
-// try to set the time execution limit to infinite, as processing takes time
+// try to set the time execution limit to infinite
 set_time_limit(0);
+// fix timezone warning issue
+if (!@ini_get('date.timezone')) {
+	@date_default_timezone_set('Europe/Berlin');
+}
 
 
 /**
@@ -89,6 +93,7 @@ class SwitchesParser extends AbstractSourceParser {
 		} else {
 			$this->oldFile = json_decode($this->oldFile, true);
 			if ($now - $this->oldFile['time'] > $this->cacheLife || $this->development > 3 || $this->development === 1) {
+				Header('Content-Type: text/plain');
 				$this->update();
 			} else {
 				$this->output = $this->oldFile;
@@ -150,13 +155,13 @@ class SwitchesParser extends AbstractSourceParser {
 		);
 		if ($deleted) {
 			$this->deleted[] = $name;
-			$new = 'DELETED: ';
+			$new = array('DELETED: ', $deleted);
 		} elseif ($new) {
 			$this->new[] = $name;
-			$new = 'NEW: ';
+			$new = array('NEW: ', $new);
 		}
-		if (is_string($new))
-			echo $new . '<a href="../index.html#' . $name . '">' . $name . '</a> - ' . $comment . '<br>';
+		if (is_array($new))
+			echo $new[0] . $name . ' (' . date('d.m.Y', $new[1]) . ') - ' . $comment . "\n";
 	}
 
 	/**
