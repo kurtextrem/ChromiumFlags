@@ -44,7 +44,10 @@ class SwitchesParser extends AbstractSourceParser {
 		'http://src.chromium.org/viewvc/chrome/trunk/src/ui/app_list/app_list_switches.cc',
 		'http://src.chromium.org/viewvc/chrome/trunk/src/components/infobars/core/infobars_switches.cc',
 		'http://src.chromium.org/viewvc/chrome/trunk/src/components/cloud_devices/common/cloud_devices_switches.cc',
-		'http://src.chromium.org/viewvc/chrome/trunk/src/content/public/android/java/src/org/chromium/content/common/ContentSwitches.java'
+		'http://src.chromium.org/viewvc/chrome/trunk/src/content/public/android/java/src/org/chromium/content/common/ContentSwitches.java',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/ui/events/event_switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/cc/base/switches.cc',
+		'http://src.chromium.org/viewvc/chrome/trunk/src/ui/keyboard/keyboard_switches.cc'
 	);
 
 	// Mid parsing
