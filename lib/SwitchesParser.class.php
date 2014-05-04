@@ -163,8 +163,8 @@ class SwitchesParser extends AbstractSourceParser {
 			$this->new[] = $name;
 			$new = array('NEW: ', $new);
 		}
-		if (is_array($new))
-			echo $new[0] . $name . ' (' . date('d.m.Y', $new[1]) . ') - ' . $comment . "\n";
+		if (is_array($new) && $new[1] === $this->output['time'])
+			echo $new[0] . $name . "\n";
 	}
 
 	/**
