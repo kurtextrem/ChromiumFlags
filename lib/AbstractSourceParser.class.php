@@ -100,7 +100,7 @@ abstract class AbstractSourceParser extends AbstractParser {
 		if ($this->development === 3 || $this->development === 5) {
 			file_put_contents('test.html', file_get_contents($url));
 		}
-		return !$this->development || $this->development === 4 ? file_get_html($url) : file_get_html('test.html');
+		return $this->development === 4 || !$this->development ? file_get_html($url) : file_get_html('test.html');
 	}
 
 	/**
