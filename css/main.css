@@ -33,3 +33,147 @@
 .table>thead>tr>td.purple, .table>tbody>tr>td.purple, .table>tfoot>tr>td.purple, .table>thead>tr>th.purple, .table>tbody>tr>th.purple, .table>tfoot>tr>th.purple, .table>thead>tr.purple>td, .table>tbody>tr.purple>td, .table>tfoot>tr.purple>td, .table>thead>tr.purple>th, .table>tbody>tr.purple>th, .table>tfoot>tr.purple>th {
 	background-color: #CCB7E8;
 }
+
+[data-tooltip], [data-hovertip] {
+	position: relative; /* [1] */
+}
+
+[data-tooltip]::before {
+	content: attr(data-tooltip); /* [2] [3] */
+}
+
+[data-tooltip]::before {
+	position: absolute; /* [1] */
+	top: 20%; /* [1] */
+	left: 0%; /* [1] */
+	border-radius: 3px;
+	padding-right: 5px;
+	padding-left:  5px;
+	white-space: nowrap;
+	font-weight: normal;
+	color: #fff;
+	background-color:  #111111;
+	border-bottom: 1px solid  #DDDDDD;
+	z-index: 1;
+	-webkit-transform: translateX(-107%);
+	-moz-transform: translateX(-107%);
+	transform: translateX(-107%);
+}
+
+[data-hovertip]::before,
+[data-hovertip]::after {
+	content: none;
+	content: normal;
+}
+
+    /**
+     * Show the tooltip when we give the element attention.
+     *
+     * 1. Fade tooltips in gradually so they don’t appear too abruptly.
+     * 2. Populate the tooltips when we show the element some attention.
+     * 3. Source the tooltip’s content from its `data-tooltip` attribute.
+     */
+     [data-hovertip]:hover::before,
+     [data-hovertip]:active::before,
+     [data-hovertip]:focus::before {
+     	-webkit-animation: 0.5s tooltip linear;
+     	-moz-animation: 0.5s tooltip linear;
+     	animation: 0.5s tooltip linear;
+     	content: ""; /* [2] */
+     }
+
+     [data-hovertip]:hover::after,
+     [data-hovertip]:active::after,
+     [data-hovertip]:focus::after {
+     	-webkit-animation: 0.5s tooltip linear;
+     	-moz-animation: 0.5s tooltip linear;
+     	animation: 0.5s tooltip linear;
+     	content: attr(data-hovertip); /* [2] [3] */
+     }
+
+    /**
+     * Create an arrow (linking the tooltip to its originator) using pure
+     * CSS triangles.
+     */
+     [data-hovertip]::before {
+     	position: absolute;
+     	top: 100%;
+     	left: 50%;
+     	margin-top:  -3px;
+     	margin-left: -5px;
+     	border: 5px solid transparent;
+     	border-bottom-color: #111111;
+
+     }
+
+    /**
+     * The textual part of the tooltip.
+     *
+     * 1. Position the text center–bottom.
+     */
+     [data-hovertip]::after {
+     	position: absolute; /* [1] */
+     	top: 100%; /* [1] */
+     	left: 50%; /* [1] */
+     	border-radius: 3px;
+     	padding: 5px;
+     	margin-top:    7px;
+     	white-space: nowrap;
+     	font-weight: normal;
+     	color: #fff;
+     	background-color:  #111111;
+     	border-bottom: 1px solid  #DDDDDD;
+     	z-index: 1;
+     	-webkit-transform: translateX(-50%);
+     	-moz-transform: translateX(-50%);
+     	transform: translateX(-50%);
+     }
+
+
+     @-webkit-keyframes tooltip {
+
+     	from {
+     		opacity: 0;
+     	}
+
+     	66.666% {
+     		opacity: 0;
+     	}
+
+     	to {
+     		opacity: 1;
+     	}
+
+     }
+
+     @-moz-keyframes tooltip {
+
+     	from {
+     		opacity: 0;
+     	}
+
+     	66.666% {
+     		opacity: 0;
+     	}
+
+     	to {
+     		opacity: 1;
+     	}
+
+     }
+
+     @keyframes tooltip {
+
+     	from {
+     		opacity: 0;
+     	}
+
+     	66.666% {
+     		opacity: 0;
+     	}
+
+     	to {
+     		opacity: 1;
+     	}
+
+     }
